@@ -1,122 +1,171 @@
 <!DOCTYPE html>
 <html lang="hi">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Emotional Companion</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Emotional Companion</title>
 
-<link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css">
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
-
+  <!-- Firebase SDK (v8) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
 
-<!-- 🔒 LOCK SCREEN -->
-<div id="screen-lock" class="screen active">
-  <div class="lock-box">
-    <div id="heart" class="heart"></div>
-    <p class="unlock-text">Tap the Heart</p>
-  </div>
-</div>
+  <!-- Debug overlay (visible briefly) -->
+  <div id="debugOverlay" style="position:fixed;top:8px;left:8px;right:8px;background:#fff;color:#000;padding:8px;z-index:99999;font-size:13px;white-space:pre-line;border-radius:8px;box-shadow:0 6px 20px rgba(0,0,0,0.25)"></div>
+  <script>
+    (function(){
+      try {
+        const o=document.getElementById('debugOverlay');
+        function show(x){ o.innerText += x + '\n'; }
+        show('DEBUG: overlay active');
+        const scripts = Array.from(document.getElementsByTagName('script')).map(s=>s.src||'[inline]');
+        show('Scripts: '+scripts.length);
+        scripts.forEach(s=>show(' - '+s));
+        setTimeout(()=>o.style.display='none',8000);
+        window.addEventListener('error', e => { show('JS ERROR: '+(e.message||e)); });
+        window.addEventListener('unhandledrejection', ev => { show('UNHANDLED REJ: '+(ev.reason||ev)); });
+      } catch(e){}
+    })();
+  </script>
 
-<!-- 🔐 LOGIN SCREEN -->
-<div id="screen-login" class="screen hidden">
-  <div class="card auth-card">
-    <h2>Emotional Companion</h2>
-    <input id="email" type="email" placeholder="Email">
-    <input id="password" type="password" placeholder="Password">
-    <button id="btnLogin" class="btn primary">Login / Signup</button>
-  </div>
-</div>
+  <!-- ===== LOCK / PIN SCREEN ===== -->
+  <div id="screen-lock" class="screen active">
+    <div class="pin-box card" style="max-width:420px;margin:80px auto;text-align:center;">
+      <h2 style="margin-bottom:6px;">Emotional Companion</h2>
+      <p style="margin-bottom:12px;opacity:0.9;">Unlock with your 4-digit PIN</p>
 
-<!-- 🏠 MAIN APP -->
-<div id="screen-app" class="screen hidden">
-
-  <header class="topbar">Emotional Companion</header>
-
-  <nav class="bottomnav">
-    <button class="nav-btn active" data-target="home">Home</button>
-    <button class="nav-btn" data-target="journal">Journal</button>
-    <button class="nav-btn" data-target="gallery">Gallery</button>
-    <button class="nav-btn" data-target="goals">Goals</button>
-    <button class="nav-btn" data-target="settings">Settings</button>
-  </nav>
-
-  <main class="main">
-
-    <!-- 😀 HOME -->
-    <section id="home" class="page">
-      <h3>Select Your Mood</h3>
-      <div class="mood-row">
-        <button class="mood" data-mood="happy">😊</button>
-        <button class="mood" data-mood="sad">😔</button>
-        <button class="mood" data-mood="angry">😡</button>
-        <button class="mood" data-mood="calm">😌</button>
-        <button class="mood" data-mood="anxious">😨</button>
+      <!-- Setup -->
+      <div id="pin-setup">
+        <input id="pinSetup" type="password" inputmode="numeric" maxlength="4" placeholder="Enter 4-digit PIN" />
+        <input id="pinConfirm" type="password" inputmode="numeric" maxlength="4" placeholder="Confirm PIN" style="margin-top:10px;" />
+        <button id="btnCreatePin" class="btn primary" style="width:100%;margin-top:12px;">Create PIN</button>
       </div>
-    </section>
 
-    <!-- 📓 JOURNAL -->
-    <section id="journal" class="page hidden">
-      <h3>Your Daily Journal</h3>
-      <p>Selected mood: <span id="selectedMood">None</span></p>
+      <!-- Enter -->
+      <div id="pin-enter" class="hidden">
+        <input id="pinEnter" type="password" inputmode="numeric" maxlength="4" placeholder="Enter PIN" />
+        <button id="btnUnlockPin" class="btn primary" style="width:100%;margin-top:12px;">Unlock</button>
+        <div style="margin-top:10px;">
+          <button id="btnForgotPin" class="btn ghost" style="width:48%;">Forgot PIN</button>
+        </div>
+      </div>
 
-      <textarea id="journalText" placeholder="Write about your day..."></textarea>
+      <div id="pin-message" style="margin-top:14px;color:#ffdede;opacity:0.95;"></div>
+    </div>
+  </div>
 
-      <h4>Upload Photo</h4>
-      <input type="file" id="photoInput" accept="image/*">
+  <!-- ===== LOGIN SCREEN ===== -->
+  <div id="screen-login" class="screen hidden">
+    <div class="card auth-card" style="max-width:520px;margin:60px auto;">
+      <h2 class="brand">Emotional Companion</h2>
+      <p class="muted">Login / Signup with Email</p>
 
-      <img id="photoPreview" class="hidden preview-img">
+      <input id="email" type="email" placeholder="Email" autocomplete="username">
+      <input id="password" type="password" placeholder="Password" autocomplete="current-password">
 
-      <button id="saveEntry" class="btn primary">Save Entry</button>
-    </section>
+      <div style="display:flex;gap:10px;margin-top:14px;">
+        <button id="btnLogin" class="btn primary" style="flex:1;">Login / Signup</button>
+      </div>
+    </div>
+  </div>
 
-    <!-- 🖼 GALLERY -->
-    <section id="gallery" class="page hidden">
-      <h3>Your Photos</h3>
-      <div id="galleryGrid" class="gallery-grid"></div>
-    </section>
+  <!-- ===== APP SHELL ===== -->
+  <div id="screen-app" class="screen hidden">
+    <header class="topbar">
+      <div class="left">☰</div>
+      <div class="center">Emotional Companion</div>
+      <div class="right">👤</div>
+    </header>
 
-    <!-- 📘 GOALS -->
-    <section id="goals" class="page hidden">
-      <h3>Future Goals</h3>
-      <input id="goalTitle" placeholder="Goal title">
-      <input id="goalDate" type="date">
-      <button id="addGoal" class="btn primary">Add Goal</button>
+    <main class="main" style="padding-bottom:90px;">
+      <!-- HOME -->
+      <section id="home" class="page card">
+        <h3>Select Your Mood</h3>
+        <div class="mood-row">
+          <button class="mood" data-mood="happy">😊</button>
+          <button class="mood" data-mood="sad">😔</button>
+          <button class="mood" data-mood="angry">😡</button>
+          <button class="mood" data-mood="calm">😌</button>
+          <button class="mood" data-mood="anxious">😨</button>
+        </div>
+      </section>
 
-      <div id="goalsList"></div>
-    </section>
+      <!-- JOURNAL -->
+      <section id="journal" class="page card hidden">
+        <h3>Your Daily Journal</h3>
+        <p>Selected mood: <span id="selectedMood">None</span></p>
 
-    <!-- ⚙ SETTINGS -->
-    <section id="settings" class="page hidden">
-      <h3>Settings</h3>
+        <textarea id="journalText" placeholder="Write about your day..."></textarea>
 
-      <label>Daily Reminder</label>
-      <select id="reminder">
-        <option value="21">9 PM</option>
-        <option value="22">10 PM</option>
-        <option value="23">11 PM</option>
-      </select>
+        <h4 style="margin-top:12px;">Upload Photo (optional)</h4>
+        <input id="photoInput" type="file" accept="image/*">
+        <img id="photoPreview" class="preview-img hidden" alt="preview">
 
-      <button id="btnLogout" class="btn danger">Logout</button>
-    </section>
+        <button id="saveEntry" class="btn primary" style="width:100%;margin-top:12px;">Save Entry</button>
+      </section>
 
-  </main>
-</div>
+      <!-- GALLERY -->
+      <section id="gallery" class="page card hidden">
+        <h3>Your Photos</h3>
+        <div id="galleryGrid" class="gallery-grid"></div>
+      </section>
 
-<!-- 💬 SHAYARI POPUP -->
-<div id="popup" class="popup hidden">
-  <div id="popupText"></div>
-  <button onclick="closePopup()" class="btn close-btn">Close</button>
-</div>
+      <!-- ENTRIES -->
+      <section id="entries" class="page card hidden">
+        <h3>Past Entries</h3>
+        <div id="entriesList">No entries yet.</div>
+      </section>
 
-<!-- TOAST -->
-<div id="toast" class="toast"></div>
+      <!-- GOALS -->
+      <section id="goals" class="page card hidden">
+        <h3>Future Goals</h3>
+        <input id="goalTitle" placeholder="Goal title">
+        <input id="goalDate" type="date">
+        <button id="addGoal" class="btn primary" style="width:100%;margin-top:8px;">Add Goal</button>
+        <div id="goalsList" style="margin-top:12px;"></div>
+      </section>
 
-<script src="app.js"></script>
+      <!-- SETTINGS -->
+      <section id="settings" class="page card hidden">
+        <h3>Settings</h3>
+        <label>Daily Reminder</label>
+        <select id="reminder">
+          <option value="21">9 PM</option>
+          <option value="22">10 PM</option>
+          <option value="23">11 PM</option>
+        </select>
+
+        <div style="margin-top:12px;">
+          <button id="btnLogout" class="btn danger">Logout</button>
+        </div>
+      </section>
+
+    </main>
+
+    <nav class="bottomnav">
+      <button class="nav-btn active" data-target="home">Home</button>
+      <button class="nav-btn" data-target="journal">Journal</button>
+      <button class="nav-btn" data-target="gallery">Gallery</button>
+      <button class="nav-btn" data-target="entries">Entries</button>
+      <button class="nav-btn" data-target="goals">Goals</button>
+      <button class="nav-btn" data-target="settings">Settings</button>
+    </nav>
+  </div>
+
+  <!-- SHAYARI POPUP -->
+  <div id="popup" class="popup hidden">
+    <div id="popupText"></div>
+    <button onclick="closePopup()" class="btn close-btn" style="margin-top:10px;">Close</button>
+  </div>
+
+  <!-- TOAST -->
+  <div id="toast" class="toast"></div>
+
+  <!-- app.js -->
+  <script src="app.js"></script>
 </body>
 </html>
