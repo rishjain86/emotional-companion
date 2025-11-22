@@ -3,13 +3,14 @@ window.__ec_debug = true;
 
 // ========= FIREBASE CONFIG - REPLACE WITH YOURS =========
 const firebaseConfig = {
-  apiKey: "",           // <- add your keys
-  authDomain: "",
-  databaseURL: "",
-  projectId: "",
-  storageBucket: "",
-  messagingSenderId: "",
-  appId: ""
+  apiKey: "AIzaSyDdANy-270UsL5cD3t_JrN6bspGISAnvl4",
+  authDomain: "emotional-companion-f6701.firebaseapp.com",
+  databaseURL: "https://emotional-companion-f6701-default-rtdb.firebaseio.com",
+  projectId: "emotional-companion-f6701",
+  storageBucket: "emotional-companion-f6701.appspot.com",
+  messagingSenderId: "1087590753254",
+  appId: "1:1087590753254:web:b251fa293680cb23656c27",
+  measurementId: "G-F020JCPS3T"
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
