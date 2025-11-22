@@ -5,41 +5,52 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Emotional Companion</title>
 
-  <link rel="stylesheet" href="style.css">
+  <!-- inline CSS -->
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box;font-family:'Poppins',sans-serif}
+    body{background:linear-gradient(135deg,#1d0b33,#2a1454,#3e1c72);color:#fff;min-height:100vh;overflow-x:hidden}
+    .screen{display:none;padding:18px}
+    .screen.active{display:block}
+    .hidden{display:none}
+    .card{background:rgba(255,255,255,0.12);backdrop-filter:blur(12px);padding:16px;border-radius:12px;margin-bottom:14px}
+    .topbar{text-align:center;padding:12px;background:rgba(255,255,255,0.06);border-radius:10px;margin-bottom:12px}
+    .brand{font-size:20px;font-weight:600}
+    .muted{opacity:0.75}
+    .btn{padding:12px;border-radius:12px;border:none;cursor:pointer;font-weight:600}
+    .primary{background:linear-gradient(135deg,#3a86ff,#7b2ff7);color:#fff}
+    .ghost{background:rgba(255,255,255,0.12);color:#fff}
+    .danger{background:#ff4d4d;color:#fff}
+    .close-btn{background:#444;color:#fff}
+    .main{max-width:760px;margin:12px auto;padding-bottom:40px}
+    .mood-row{display:flex;justify-content:space-between;margin-top:12px}
+    .mood{font-size:42px;background:none;border:none;cursor:pointer;transition:transform .18s}
+    .mood:active{transform:scale(1.12)}
+    .preview-img{width:100%;border-radius:12px;margin-top:10px}
+    .gallery-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+    .gallery-grid img{width:100%;border-radius:12px}
+    .popup{position:fixed;left:50%;top:28%;transform:translateX(-50%);width:86%;background:#fff;color:#000;padding:16px;border-radius:12px;z-index:999}
+    .toast{position:fixed;bottom:86px;left:50%;transform:translateX(-50%);padding:12px 18px;background:#000;color:#fff;border-radius:12px;opacity:0;transition:opacity .3s}
+    .toast.show{opacity:1}
+    .pin-box{max-width:480px}
+    .pin-box input[type="password"], .pin-box input[type="text"]{width:100%;padding:12px;border-radius:10px;border:none;background:rgba(255,255,255,0.06);color:#fff;font-size:18px;text-align:center}
+    .pin-box .btn{font-weight:700}
+    .pin-box .hidden{display:none}
+    #pin-message{font-size:14px;opacity:0.95;margin-top:8px;color:#ffdede}
+    @media (max-width:420px){ .mood{font-size:34px} .main{padding:12px} }
+    /* debug overlay visuals */
+    #debugOverlay{position:fixed;top:8px;left:8px;right:8px;background:#fff;color:#000;padding:10px;z-index:99999;font-family:monospace;font-size:13px;white-space:pre-line;border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.25)}
+  </style>
 
-  <!-- Firebase SDK (v8) -->
+  <!-- Firebase SDKs (v8) loaded externally - keep them as scripts (these are allowed by GitHub Pages) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 </head>
 <body>
 
-  <!-- DEBUG OVERLAY (visible briefly; shows runtime errors) -->
-  <div id="debugOverlay" style="
-    position:fixed;top:8px;left:8px;right:8px;
-    background:#fff;color:#000;padding:10px;z-index:99999;
-    font-family:monospace;font-size:13px;white-space:pre-line;
-    border-radius:8px;box-shadow:0 8px 30px rgba(0,0,0,0.25);">
-  </div>
-
-  <script>
-    (function(){
-      const o = document.getElementById('debugOverlay');
-      function show(x){ o.innerText += x + '\\n'; }
-      try {
-        show('DEBUG: overlay active');
-        show('Time: ' + (new Date()).toLocaleString());
-        const scripts = Array.from(document.getElementsByTagName('script')).map(s => s.src || '[inline]');
-        show('Scripts found: ' + scripts.length);
-        scripts.forEach(s => show(' - ' + s));
-        window.addEventListener('error', e => show('JS ERROR: ' + (e.message || e)));
-        window.addEventListener('unhandledrejection', ev => show('UNHANDLED REJECTION: ' + (ev.reason || ev)));
-      } catch(e){
-        try{ o.innerText += 'Overlay init failed: ' + e.message; }catch(_) {}
-      }
-      setTimeout(()=>{ try{ o.style.display='none'; }catch(e){} }, 9000);
-    })();
-  </script>
+  <!-- DEBUG OVERLAY (brief) -->
+  <div id="debugOverlay"></div>
 
   <!-- LOCK / PIN SCREEN -->
   <div id="screen-lock" class="screen active">
@@ -105,7 +116,7 @@
       <section id="journal" class="page card hidden">
         <h3>Your Daily Journal</h3>
         <p>Selected mood: <span id="selectedMood">None</span></p>
-        <textarea id="journalText" placeholder="Write about your day..."></textarea>
+        <textarea id="journalText" placeholder="Write about your day..." style="width:100%;min-height:120px;padding:12px;border-radius:10px;border:none;background:rgba(255,255,255,0.06);color:#fff"></textarea>
 
         <h4 style="margin-top:12px;">Upload Photo (optional)</h4>
         <input id="photoInput" type="file" accept="image/*">
@@ -129,8 +140,8 @@
       <!-- GOALS -->
       <section id="goals" class="page card hidden">
         <h3>Future Goals</h3>
-        <input id="goalTitle" placeholder="Goal title">
-        <input id="goalDate" type="date">
+        <input id="goalTitle" placeholder="Goal title" style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.06);color:#fff">
+        <input id="goalDate" type="date" style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.06);color:#fff;margin-top:8px">
         <button id="addGoal" class="btn primary" style="width:100%;margin-top:8px;">Add Goal</button>
         <div id="goalsList" style="margin-top:12px;"></div>
       </section>
@@ -139,7 +150,7 @@
       <section id="settings" class="page card hidden">
         <h3>Settings</h3>
         <label>Daily Reminder</label>
-        <select id="reminder">
+        <select id="reminder" style="width:100%;padding:10px;border-radius:8px;border:none;background:rgba(255,255,255,0.06);color:#fff;margin-top:8px">
           <option value="21">9 PM</option>
           <option value="22">10 PM</option>
           <option value="23">11 PM</option>
@@ -151,7 +162,7 @@
       </section>
     </main>
 
-    <nav class="bottomnav">
+    <nav class="bottomnav" style="position:fixed;bottom:0;left:0;width:100%;display:flex;justify-content:space-around;background:rgba(0,0,0,0.4);padding:10px;backdrop-filter:blur(8px)">
       <button class="nav-btn active" data-target="home">Home</button>
       <button class="nav-btn" data-target="journal">Journal</button>
       <button class="nav-btn" data-target="gallery">Gallery</button>
@@ -169,7 +180,273 @@
 
   <div id="toast" class="toast"></div>
 
-  <!-- CORE SCRIPT -->
-  <script src="app.js"></script>
+  <!-- INLINE JS (full app logic) -->
+  <script>
+    (function(){
+      // debug helper
+      function debug(msg){
+        try{ const o = document.getElementById('debugOverlay'); if(o) o.innerText += '\\n' + msg; else console.log(msg); } catch(e){ console.log('DBGERR', e); }
+      }
+      debug('DEBUG: inline app start');
+
+      // --- FIREBASE CONFIG (corrected) ---
+      const firebaseConfig = {
+        apiKey: "AIzaSyDdANy-270UsL5cD3t_JrN6bspGISAnvl4",
+        authDomain: "emotional-companion-f6701.firebaseapp.com",
+        databaseURL: "https://emotional-companion-f6701-default-rtdb.firebaseio.com",
+        projectId: "emotional-companion-f6701",
+        storageBucket: "emotional-companion-f6701.appspot.com",
+        messagingSenderId: "1087590753254",
+        appId: "1:1087590753254:web:b251fa293680cb23656c27",
+        measurementId: "G-F020JCPS3T"
+      };
+      try {
+        firebase.initializeApp(firebaseConfig);
+      } catch(e){
+        debug('Firebase init error: ' + (e && e.message ? e.message : e));
+      }
+      const auth = firebase.auth();
+      const db = firebase.database();
+
+      // CLOUDINARY
+      const CLOUD_NAME = "darmz4wsz";
+      const UPLOAD_PRESET = "emotional_preset";
+      const CLOUD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+      // helpers
+      const el = id => document.getElementById(id);
+      function showToast(msg){ const t=el('toast'); if(!t) return; t.innerText=msg; t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),1800); }
+
+      // SHA256 for PIN hashing
+      async function sha256Hex(text){
+        const enc = new TextEncoder();
+        const data = enc.encode(text);
+        const h = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2,'0')).join('');
+      }
+
+      // PIN logic
+      const PIN_KEY = 'ec_pin_hash';
+      function show(id){ const e=el(id); e && e.classList.remove('hidden'); }
+      function hide(id){ const e=el(id); e && e.classList.add('hidden'); }
+      function setMessage(msg){ const e=el('pin-message'); if(e){ e.innerText = msg; if(msg) setTimeout(()=> e.innerText = '',3800); } }
+
+      document.addEventListener('DOMContentLoaded', ()=> {
+        try{
+          // overlay initial info
+          debug('DOM ready');
+
+          const stored = localStorage.getItem(PIN_KEY);
+          if(stored){ hide('pin-setup'); show('pin-enter'); } else { show('pin-setup'); hide('pin-enter'); }
+
+          el('btnCreatePin').addEventListener('click', async ()=>{
+            try{
+              const p = (el('pinSetup').value||'').trim();
+              const c = (el('pinConfirm').value||'').trim();
+              if(!/^[0-9]{4}$/.test(p) || !/^[0-9]{4}$/.test(c)){ setMessage('PIN must be exactly 4 digits'); return; }
+              if(p !== c){ setMessage('PINs do not match'); return; }
+              const h = await sha256Hex(p);
+              localStorage.setItem(PIN_KEY, h);
+              setMessage('PIN saved. Please unlock.');
+              hide('pin-setup'); show('pin-enter');
+              el('pinSetup').value=''; el('pinConfirm').value='';
+            } catch(e){ debug('createPin err: ' + e.message); setMessage('Failed to save PIN'); }
+          });
+
+          el('btnUnlockPin').addEventListener('click', async ()=>{
+            try{
+              const pin = (el('pinEnter').value||'').trim();
+              if(!/^[0-9]{4}$/.test(pin)){ setMessage('Enter 4-digit PIN'); return; }
+              const stored = localStorage.getItem(PIN_KEY);
+              if(!stored){ setMessage('No PIN set'); hide('pin-enter'); show('pin-setup'); return; }
+              const h = await sha256Hex(pin);
+              if(h === stored){
+                el('screen-lock').classList.remove('active'); el('screen-lock').classList.add('hidden');
+                el('screen-login').classList.remove('hidden');
+                el('pinEnter').value='';
+              } else {
+                setMessage('Incorrect PIN');
+                el('pinEnter').value='';
+              }
+            } catch(e){ debug('unlock err: ' + e.message); setMessage('Unlock failed'); }
+          });
+
+          el('btnForgotPin').addEventListener('click', ()=> {
+            localStorage.removeItem(PIN_KEY);
+            setMessage('PIN cleared. Create a new one.');
+            hide('pin-enter'); show('pin-setup');
+          });
+
+          ['pinEnter','pinSetup','pinConfirm'].forEach(id=>{
+            const input = el(id);
+            if(!input) return;
+            input.addEventListener('keydown', (ev)=>{ if(ev.key === 'Enter'){ ev.preventDefault(); if(id === 'pinEnter') el('btnUnlockPin').click(); else el('btnCreatePin').click(); } });
+          });
+
+        } catch(e){ debug('PIN init main err: ' + (e.message||e)); }
+      });
+
+      // AUTH
+      el('btnLogin').addEventListener('click', ()=>{
+        const eVal = (el('email').value||'').trim();
+        const pVal = (el('password').value||'').trim();
+        if(!eVal || !pVal){ showToast('Enter email & password'); return; }
+        auth.signInWithEmailAndPassword(eVal, pVal)
+          .catch(()=> auth.createUserWithEmailAndPassword(eVal, pVal).catch(err=> showToast(err.message)));
+      });
+
+      auth.onAuthStateChanged(user => {
+        try{
+          if(user){
+            debug('Auth logged in: ' + user.uid);
+            window.uid = user.uid;
+            el('screen-login').classList.add('hidden');
+            el('screen-app').classList.remove('hidden');
+            loadEntries(); loadGallery(); loadGoals(); loadSettings();
+          } else {
+            debug('Auth: not logged in');
+          }
+        } catch(e){ debug('auth state err: ' + e.message); }
+      });
+
+      // NAV
+      document.querySelectorAll('.nav-btn').forEach(btn=> {
+        btn.addEventListener('click', ()=> {
+          document.querySelectorAll('.nav-btn').forEach(n=>n.classList.remove('active'));
+          btn.classList.add('active');
+          document.querySelectorAll('.page').forEach(p=>p.classList.add('hidden'));
+          const t = btn.dataset.target;
+          if(t && document.getElementById(t)) document.getElementById(t).classList.remove('hidden');
+        });
+      });
+
+      // Shayari pool & unique selection
+      const templates = {
+        happy:{ start:["Muskurahat se","Dil khush hoke","Aaj ka din","Khushi ke saath","Sundar pal me"], middle:["har lamha roshan hota hai","umeed jagti hai","zindagi mehka karti hai","dil halka lagta hai"], end:["— yunhi muskurate raho.","aur chamakte raho.","yehi asli jeet hai."]},
+        sad:{ start:["Har dard ke baad","Aansu ke baad","Andhera chhatega","Gham me bhi"], middle:["subah zaroor aati hai","nayi umeed jagti hai","dil ko himmat milti hai"], end:["— sab theek hoga.","himmat rakho.","ye waqt guzar jayega."]},
+        angry:{ start:["Gussa chhodo","Shaanti se socho","Thoda ruk kar"], middle:["baat sulajh jati hai","dil halka hota hai","pyaar badhta hai"], end:["— calm raho.","sab theek hoga.","shaanti zaroori hai."]},
+        calm:{ start:["Shaanti me","Sukoon ke pal me","Gehri saans lekar"], middle:["zindagi khubsurat lagti hai","dil halka hota hai","pal mehka lagta hai"], end:["— sukoon hi daulat hai.","ye pal sambhal kar rakho."]},
+        anxious:{ start:["Chinta mat karo","Aahista chalo","Vishwas rakho"], middle:["sab theek hoga","ye waqt guzar jayega","himat banegi"], end:["— sab accha hoga.","dar mat rakho."]}
+      };
+      function makePool(mood,count){ const p=templates[mood]; const s=new Set(); while(s.size<count){ const a=p.start[Math.floor(Math.random()*p.start.length)]; const b=p.middle[Math.floor(Math.random()*p.middle.length)]; const c=p.end[Math.floor(Math.random()*p.end.length)]; s.add(`${a} ${b} ${c}`); } return Array.from(s); }
+      const POOL = {}; ["happy","sad","angry","calm","anxious"].forEach(m=> POOL[m]=makePool(m,200));
+
+      async function pickShayari(mood){
+        try {
+          if(!window.uid) return POOL[mood][Math.floor(Math.random()*POOL[mood].length)];
+          const snap = await db.ref(`users/${window.uid}/seen_shayari`).once('value');
+          const seen = snap.val() ? Object.values(snap.val()).map(x=>x.text) : [];
+          let chosen = null;
+          for(const s of POOL[mood]){ if(!seen.includes(s)){ chosen = s; break; } }
+          if(!chosen) chosen = POOL[mood][Math.floor(Math.random()*POOL[mood].length)];
+          await db.ref(`users/${window.uid}/seen_shayari`).push({ text: chosen, ts: Date.now() });
+          return chosen;
+        } catch(e){ debug('pickShayari err: ' + e.message); return POOL[mood][Math.floor(Math.random()*POOL[mood].length)]; }
+      }
+
+      document.querySelectorAll('.mood').forEach(btn=>{
+        btn.addEventListener('click', async ()=>{
+          try {
+            const m = btn.dataset.mood;
+            el('selectedMood').innerText = m;
+            const s = await pickShayari(m);
+            el('popupText').innerText = s;
+            el('popup').classList.remove('hidden');
+            // set current selection
+            window._selectedMood = m;
+            window._selectedShayari = s;
+          } catch(e){ debug('mood click err: ' + e.message); }
+        });
+      });
+
+      window.closePopup = function(){ try{ el('popup').classList.add('hidden'); }catch(e){} };
+
+      // Photo preview & upload
+      const photoInput = el('photoInput'), photoPreview = el('photoPreview');
+      if(photoInput){
+        photoInput.addEventListener('change', ()=> {
+          const f = photoInput.files[0];
+          if(f){ photoPreview.src = URL.createObjectURL(f); photoPreview.classList.remove('hidden'); }
+        });
+      }
+
+      async function uploadToCloudinary(file){
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('upload_preset', UPLOAD_PRESET);
+        const r = await fetch(CLOUD_URL, { method:'POST', body: fd });
+        const j = await r.json();
+        if(j.error) throw new Error(j.error.message || 'Upload failed');
+        return j.secure_url;
+      }
+
+      // Save entry
+      el('saveEntry').addEventListener('click', async ()=>{
+        try{
+          if(!window._selectedMood){ showToast('Select mood first'); return; }
+          const text = (el('journalText').value||'').trim();
+          let photoURL = '';
+          if(photoInput && photoInput.files[0]) photoURL = await uploadToCloudinary(photoInput.files[0]);
+          const today = new Date().toISOString().split('T')[0];
+          if(!window.uid){ showToast('Please login to save'); return; }
+          await db.ref(`users/${window.uid}/journal/${today}`).set({ date: today, mood: window._selectedMood, shayari: window._selectedShayari || '', journal: text, photo: photoURL, ts: Date.now() });
+          showToast('Saved');
+          el('journalText').value = ''; photoPreview.classList.add('hidden');
+          loadEntries(); loadGallery();
+        } catch(e){ debug('saveEntry err: ' + (e.message||e)); showToast('Save failed'); }
+      });
+
+      // Load entries
+      async function loadEntries(){
+        try{
+          if(!window.uid) return;
+          const snap = await db.ref(`users/${window.uid}/journal`).once('value');
+          const box = el('entriesList'); box.innerHTML='';
+          if(!snap.val()){ box.innerText = 'No entries'; return; }
+          const arr = Object.values(snap.val()).sort((a,b)=>b.ts - a.ts);
+          arr.forEach(e=>{
+            const d = document.createElement('div'); d.classList.add('card');
+            d.innerHTML = `<b>${e.date}</b><br>Mood: ${e.mood}<br>Shayari: ${e.shayari}<br>Note: ${e.journal}${e.photo?`<img src="${e.photo}" style="width:100%;border-radius:10px;margin-top:8px">`:''}`;
+            box.appendChild(d);
+          });
+        } catch(e){ debug('loadEntries err: ' + (e.message||e)); }
+      }
+
+      // Load gallery
+      async function loadGallery(){
+        try{
+          if(!window.uid) return;
+          const snap = await db.ref(`users/${window.uid}/journal`).once('value');
+          const grid = el('galleryGrid'); grid.innerHTML = '';
+          if(!snap.val()){ grid.innerText='No photos'; return; }
+          const items = Object.values(snap.val());
+          items.forEach(i=> { if(i.photo){ const img = document.createElement('img'); img.src = i.photo; grid.appendChild(img); }});
+        } catch(e){ debug('loadGallery err: ' + (e.message||e)); }
+      }
+
+      // Goals
+      el('addGoal').addEventListener('click', async ()=>{
+        try{
+          const title = (el('goalTitle').value||'').trim(); const date = el('goalDate').value;
+          if(!title || !date){ showToast('Enter goal & date'); return; }
+          if(!window.uid){ showToast('Login to save'); return; }
+          await db.ref(`users/${window.uid}/goals`).push({ title, date, ts: Date.now() });
+          el('goalTitle').value=''; loadGoals();
+        } catch(e){ debug('addGoal err: ' + (e.message||e)); showToast('Failed'); }
+      });
+      async function loadGoals(){ try{ if(!window.uid) return; const snap = await db.ref(`users/${window.uid}/goals`).once('value'); const list = el('goalsList'); list.innerHTML=''; if(!snap.val()){ list.innerText='No goals'; return; } Object.values(snap.val()).forEach(g=>{ const dd=document.createElement('div'); dd.classList.add('card'); dd.innerHTML=`<b>${g.title}</b><br>Target: ${g.date}`; list.appendChild(dd); }); } catch(e){ debug('loadGoals err: ' + (e.message||e)); } }
+
+      // Settings / logout
+      el('btnLogout').addEventListener('click', ()=> { auth.signOut(); location.reload(); });
+      el('reminder').addEventListener('change', ()=> { if(!window.uid){ showToast('Login to save settings'); return; } db.ref(`users/${window.uid}/settings`).set({ reminder: el('reminder').value }); showToast('Reminder saved'); });
+      async function loadSettings(){ try{ if(!window.uid) return; const snap = await db.ref(`users/${window.uid}/settings`).once('value'); if(snap.val()) el('reminder').value = snap.val().reminder || '21'; } catch(e){ debug('loadSettings err: ' + (e.message||e)); } }
+
+      // Auth listener already set; show debug final
+      debug('inline app loaded');
+    })();
+  </script>
+
+  <!-- hide debug overlay after a bit so it doesn't block -->
+  <script>setTimeout(()=>{ try{ document.getElementById('debugOverlay').style.display='none'; }catch(e){} }, 9000);</script>
 </body>
 </html>
