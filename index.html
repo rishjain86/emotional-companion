@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Emotional Companion</title>
+
+<link rel="stylesheet" href="style.css">
+
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
+
+</head>
+<body>
+
+<!-- 🔒 LOCK SCREEN -->
+<div id="screen-lock" class="screen active">
+  <div class="lock-box">
+    <div id="heart" class="heart"></div>
+    <p class="unlock-text">Tap the Heart</p>
+  </div>
+</div>
+
+<!-- 🔐 LOGIN SCREEN -->
+<div id="screen-login" class="screen hidden">
+  <div class="card auth-card">
+    <h2>Emotional Companion</h2>
+    <input id="email" type="email" placeholder="Email">
+    <input id="password" type="password" placeholder="Password">
+    <button id="btnLogin" class="btn primary">Login / Signup</button>
+  </div>
+</div>
+
+<!-- 🏠 MAIN APP -->
+<div id="screen-app" class="screen hidden">
+
+  <header class="topbar">Emotional Companion</header>
+
+  <nav class="bottomnav">
+    <button class="nav-btn active" data-target="home">Home</button>
+    <button class="nav-btn" data-target="journal">Journal</button>
+    <button class="nav-btn" data-target="gallery">Gallery</button>
+    <button class="nav-btn" data-target="goals">Goals</button>
+    <button class="nav-btn" data-target="settings">Settings</button>
+  </nav>
+
+  <main class="main">
+
+    <!-- 😀 HOME -->
+    <section id="home" class="page">
+      <h3>Select Your Mood</h3>
+      <div class="mood-row">
+        <button class="mood" data-mood="happy">😊</button>
+        <button class="mood" data-mood="sad">😔</button>
+        <button class="mood" data-mood="angry">😡</button>
+        <button class="mood" data-mood="calm">😌</button>
+        <button class="mood" data-mood="anxious">😨</button>
+      </div>
+    </section>
+
+    <!-- 📓 JOURNAL -->
+    <section id="journal" class="page hidden">
+      <h3>Your Daily Journal</h3>
+      <p>Selected mood: <span id="selectedMood">None</span></p>
+
+      <textarea id="journalText" placeholder="Write about your day..."></textarea>
+
+      <h4>Upload Photo</h4>
+      <input type="file" id="photoInput" accept="image/*">
+
+      <img id="photoPreview" class="hidden preview-img">
+
+      <button id="saveEntry" class="btn primary">Save Entry</button>
+    </section>
+
+    <!-- 🖼 GALLERY -->
+    <section id="gallery" class="page hidden">
+      <h3>Your Photos</h3>
+      <div id="galleryGrid" class="gallery-grid"></div>
+    </section>
+
+    <!-- 📘 GOALS -->
+    <section id="goals" class="page hidden">
+      <h3>Future Goals</h3>
+      <input id="goalTitle" placeholder="Goal title">
+      <input id="goalDate" type="date">
+      <button id="addGoal" class="btn primary">Add Goal</button>
+
+      <div id="goalsList"></div>
+    </section>
+
+    <!-- ⚙ SETTINGS -->
+    <section id="settings" class="page hidden">
+      <h3>Settings</h3>
+
+      <label>Daily Reminder</label>
+      <select id="reminder">
+        <option value="21">9 PM</option>
+        <option value="22">10 PM</option>
+        <option value="23">11 PM</option>
+      </select>
+
+      <button id="btnLogout" class="btn danger">Logout</button>
+    </section>
+
+  </main>
+</div>
+
+<!-- 💬 SHAYARI POPUP -->
+<div id="popup" class="popup hidden">
+  <div id="popupText"></div>
+  <button onclick="closePopup()" class="btn close-btn">Close</button>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
